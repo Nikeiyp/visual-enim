@@ -4,133 +4,183 @@
     <title>Visual-Enim | Battery Check</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { margin: 0; font-family: 'Arial', sans-serif; background: white; }
+        body { margin: 0; font-family: 'Arial', sans-serif; background: white; overflow-x: hidden; }
         
-        /* Navbar sama seperti dashboard */
+        /* Navbar */
         nav { display: flex; align-items: center; padding: 20px 40px; border-bottom: 1px solid #eee; }
         .logo { font-weight: 900; font-size: 1.2rem; margin-right: 40px; }
-        .nav-links a { text-decoration: none; color: #888; font-weight: 600; margin-right: 20px; }
-        .nav-links a.active { color: black; border-bottom: 2px solid blue; padding-bottom: 21px; }
+        .nav-links a { text-decoration: none; color: #888; font-weight: 600; margin-right: 20px; transition: 0.3s; }
+        .nav-links a:hover { color: black; }
+        .nav-links a.active { color: black; border-bottom: 2px solid black; padding-bottom: 19px; }
+
+        /* Label Kategori (Opsional, biar rapi) */
+        .category-label {
+            max-width: 1200px; margin: 30px auto 10px auto; padding: 0 40px;
+            font-size: 1.2rem; font-weight: 900; color: #ccc; text-transform: uppercase;
+        }
 
         /* Grid Layout */
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px; padding: 40px; max-width: 1200px; margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px; 
+            padding: 0 40px 40px 40px; /* Padding atas 0 karena sudah ada margin */
+            max-width: 1200px; margin: 0 auto;
         }
 
-        /* Card Style */
+        /* --- Style Kartu & Popover (Sama seperti sebelumnya) --- */
         .card {
-            background: #eee; border-radius: 15px; padding: 20px;
-            position:RP; display: flex; flex-direction: column; justify-content: space-between;
+            background: #e0e0e0; border-radius: 15px; padding: 20px;
+            position: relative; display: flex; flex-direction: column; justify-content: space-between;
             height: 180px; transition: 0.3s;
         }
-        
-        /* Header Card (Nama & Status) */
         .card-header {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 10px;
+            border-bottom: 3px solid black; padding-bottom: 10px; margin-bottom: 10px;
         }
-        .bat-name { font-weight: 800; font-size: 1.2rem; }
-        .bat-status { 
-            font-weight: bold; font-size: 0.9rem; 
-            background: white; padding: 2px 8px; border-radius: 4px; border: 1px solid #ccc;
-        }
-
-        /* Charging Style Dinamis */
-        .status-Charging { color: orange; border-color: orange; }
+        .bat-name { font-weight: 800; font-size: 1.5rem; }
+        .bat-status { font-weight: bold; font-size: 1rem; }
+        .status-Charging { color: #ff8c00; }
         .status-Ready { color: black; }
-
-        /* Percentage Besar */
-        .percentage { font-size: 3.5rem; font-weight: 900; color: black; margin: 0; line-height: 1; }
-
-        /* Tombol Bawah */
-        .card-footer { display: flex; justify-content: space-between; margin-top: auto; }
-        
+        .percentage { font-size: 4rem; font-weight: 900; color: black; margin: 0; line-height: 1; }
+        .card-footer { display: flex; justify-content: space-between; margin-top: auto; position: relative; z-index: 2;}
         .btn {
-            border: none; padding: 8px 16px; border-radius: 20px;
-            font-weight: bold; cursor: pointer; font-size: 0.8rem;
-            text-transform: uppercase; color: white;
+            border: none; padding: 10px 20px; border-radius: 30px;
+            font-weight: 800; cursor: pointer; font-size: 0.9rem;
+            color: white; background: black; transition: 0.2s;
         }
-        .btn-charge { background: black; }
-        .btn-update { background: black; }
-        
-        /* Animasi klik */
+        .btn:hover { transform: scale(1.05); }
         .btn:active { transform: scale(0.95); }
 
+        /* Popover Style */
+        .popover-box {
+            display: none; position: absolute; top: 0; right: -190px;
+            width: 160px; height: 100%; background: #e0e0e0;
+            border-radius: 15px; padding: 20px; box-sizing: border-box;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2); z-index: 10;
+            flex-direction: column; justify-content: center;
+        }
+        .popover-visible { display: flex; }
+        .popover-input {
+            font-size: 2.5rem; font-weight: 900; width: 100%;
+            background: transparent; border: none; border-bottom: 3px solid black;
+            text-align: center; margin-bottom: 20px; outline: none;
+        }
+        .popover-input::-webkit-inner-spin-button, 
+        .popover-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .btn-submit { width: 100%; padding: 12px; }
+
+        @media (max-width: 768px) {
+            .popover-box { top: 105%; right: 0; left: 0; width: 100%; height: auto; z-index: 20; }
+        }
     </style>
 </head>
 <body>
 
     <nav>
-        <div class="logo">⚡</div>
+        <div class="logo">Visual-Enim</div>
         <div class="nav-links">
+            <a href="/dashboard">Home</a>
             <a href="/battery" class="active">Battery Check</a>
             <a href="#">Schedule</a>
         </div>
     </nav>
 
-    <div class="grid-container">
-        <% batteries.forEach(function(bat) { %>
-            <div class="card">
+    <% 
+        // Kita filter data menjadi dua kelompok array
+        const nxList = batteries.filter(b => b.name.includes('NX'));
+        const a67List = batteries.filter(b => b.name.includes('A67'));
+    %>
+
+    <div class="grid-container" style="margin-top: 40px;">
+        <% nxList.forEach(function(bat) { %>
+            <div class="card" id="card-<%= bat.id %>">
                 <div class="card-header">
                     <div class="bat-name"><%= bat.name %></div>
-                    <div class="bat-status status-<%= bat.status %>" id="status-text-<%= bat.id %>">
-                        <%= bat.status %>
-                    </div>
+                    <div class="bat-status status-<%= bat.status %>"><%= bat.status %></div>
                 </div>
-
-                <div class="percentage" id="percent-text-<%= bat.id %>">
-                    <%= bat.percentage %>%
-                </div>
-
+                <div class="percentage" id="percent-text-<%= bat.id %>"><%= bat.percentage %>%</div>
                 <div class="card-footer">
-                    <button class="btn btn-charge" onclick="toggleStatus(<%= bat.id %>, '<%= bat.status %>')">
-                        Charge
-                    </button>
-                    <button class="btn btn-update" onclick="updatePercent(<%= bat.id %>)">
-                        Update
-                    </button>
+                    <button class="btn" onclick="toggleStatus(<%= bat.id %>, '<%= bat.status %>')">Charge</button>
+                    <button class="btn" onclick="togglePopover(<%= bat.id %>)">Update</button>
+                </div>
+                
+                <div class="popover-box" id="popover-<%= bat.id %>">
+                    <input type="number" id="input-percent-<%= bat.id %>" class="popover-input" value="<%= bat.percentage %>" min="0" max="100">
+                    <button class="btn btn-submit" onclick="submitUpdate(<%= bat.id %>)">Submit</button>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+
+    <div class="grid-container">
+        <% a67List.forEach(function(bat) { %>
+            <div class="card" id="card-<%= bat.id %>">
+                <div class="card-header">
+                    <div class="bat-name"><%= bat.name %></div>
+                    <div class="bat-status status-<%= bat.status %>"><%= bat.status %></div>
+                </div>
+                <div class="percentage" id="percent-text-<%= bat.id %>"><%= bat.percentage %>%</div>
+                <div class="card-footer">
+                    <button class="btn" onclick="toggleStatus(<%= bat.id %>, '<%= bat.status %>')">Charge</button>
+                    <button class="btn" onclick="togglePopover(<%= bat.id %>)">Update</button>
+                </div>
+                
+                <div class="popover-box" id="popover-<%= bat.id %>">
+                    <input type="number" id="input-percent-<%= bat.id %>" class="popover-input" value="<%= bat.percentage %>" min="0" max="100">
+                    <button class="btn btn-submit" onclick="submitUpdate(<%= bat.id %>)">Submit</button>
                 </div>
             </div>
         <% }); %>
     </div>
 
     <script>
-        // Fungsi Update Persentase
-        async function updatePercent(id) {
-            const newPercent = prompt("Masukkan Persentase Baru (0-100):");
-            if (newPercent !== null && newPercent !== "" && !isNaN(newPercent)) {
-                
-                // Update Tampilan Dulu (Biar cepet rasanya)
-                document.getElementById(`percent-text-${id}`).innerText = newPercent + "%";
+        function togglePopover(id) {
+            const allPopovers = document.querySelectorAll('.popover-box');
+            allPopovers.forEach(box => {
+                if (box.id !== `popover-${id}`) box.classList.remove('popover-visible');
+            });
+            const popover = document.getElementById(`popover-${id}`);
+            const inputField = document.getElementById(`input-percent-${id}`);
+            popover.classList.toggle('popover-visible');
+            if (popover.classList.contains('popover-visible')) {
+                inputField.focus(); inputField.select();
+            }
+        }
 
-                // Kirim ke Database di belakang layar
-                await fetch('/api/update-percent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+        async function submitUpdate(id) {
+            const inputField = document.getElementById(`input-percent-${id}`);
+            const newPercent = inputField.value;
+            if (newPercent === "" || isNaN(newPercent) || newPercent < 0 || newPercent > 100) {
+                alert("Masukkan angka 0-100 yang valid."); return;
+            }
+            try {
+                document.getElementById(`percent-text-${id}`).innerText = newPercent + "%";
+                togglePopover(id);
+                const response = await fetch('/api/update-percent', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: id, percentage: newPercent })
                 });
+                if (!response.ok) throw new Error('Gagal menyimpan ke server');
+            } catch (err) {
+                alert("Error: " + err.message); location.reload();
             }
         }
 
-        // Fungsi Toggle Charge/Ready
         async function toggleStatus(id, currentStatus) {
-            // Kirim ke server minta ganti status
             const response = await fetch('/api/toggle-status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: id, currentStatus: currentStatus })
             });
-            
             const data = await response.json();
-            
-            if (data.success) {
-                // Reload halaman otomatis supaya tombol status terupdate logikanya
-                // (Cara paling aman biar tombolnya gk bingung status lama)
-                location.reload(); 
-            }
+            if (data.success) { location.reload(); }
         }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.card')) {
+                 document.querySelectorAll('.popover-box').forEach(box => box.classList.remove('popover-visible'));
+            }
+        });
     </script>
 </body>
 </html>
