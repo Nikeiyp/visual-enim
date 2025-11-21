@@ -15,11 +15,13 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- KONEKSI DATABASE SUPABASE ---
 // Kita rakit data dari .env menjadi satu link koneksi
-const connectionString = `postgresql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}?sslmode=require`;
+const connectionString = `postgresql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`;
 
 const pool = new pg.Pool({
     connectionString: connectionString,
-    ssl: { rejectUnauthorized: false } // Wajib untuk Supabase
+    ssl: {
+        rejectUnauthorized: false // <--- INI KUNCI PERBAIKANNYA
+    }
 });
 
 // --- INIT DATABASE (Otomatis Bikin Tabel) ---
