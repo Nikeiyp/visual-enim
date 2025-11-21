@@ -1,24 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Visual-Enim | Dashboard</title>
+    <title>Visual-Enim | Battery Check</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* CSS Global yang dipakai ulang */
         body { margin: 0; font-family: 'Arial', sans-serif; background: white; }
         
-        /* Navbar Style */
-        nav {
-            display: flex; align-items: center; padding: 20px 40px;
-            border-bottom: 1px solid #eee;
-        }
+        /* Navbar */
+        nav { display: flex; align-items: center; padding: 20px 40px; border-bottom: 1px solid #eee; }
         .logo { font-weight: 900; font-size: 1.2rem; margin-right: 40px; }
-        .nav-links a {
-            text-decoration: none; color: #888; font-weight: 600;
-            margin-right: 20px; transition: color 0.3s;
-        }
-        .nav-links a:hover, .nav-links a.active { color: black; }
-
+        .nav-links a { text-decoration: none; color: #888; font-weight: 600; margin-right: 20px; transition: 0.3s; }
+        .nav-links a:hover { color: black; }
+        .nav-links a.active { color: black; border-bottom: 2px solid black; padding-bottom: 19px; }
         /* Content Style */
         .container { text-align: center; padding: 40px 20px; max-width: 1000px; margin: 0 auto; }
         h1 { font-size: 3rem; margin-bottom: 0; letter-spacing: -1px; }
