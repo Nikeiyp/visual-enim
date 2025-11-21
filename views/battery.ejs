@@ -22,12 +22,11 @@
             max-width: 1200px; margin: 0 auto;
         }
 
-        /* --- Style Kartu --- */
+        /* Style Kartu */
         .card {
             background: #e0e0e0; border-radius: 15px; padding: 20px;
-            position: relative; /* Acuan posisi */
             display: flex; flex-direction: column; justify-content: space-between;
-            height: 180px; transition: 0.3s; overflow: hidden; /* Pastikan anak elemen gk keluar */
+            height: 180px; transition: 0.3s;
         }
         
         .card-header {
@@ -38,9 +37,10 @@
         .bat-status { font-weight: bold; font-size: 1rem; }
         .status-Charging { color: #ff8c00; }
         .status-Ready { color: black; }
+        
         .percentage { font-size: 4rem; font-weight: 900; color: black; margin: 0; line-height: 1; }
         
-        .card-footer { display: flex; justify-content: space-between; margin-top: auto; position: relative; z-index: 2;}
+        .card-footer { display: flex; justify-content: space-between; margin-top: auto; }
         .btn {
             border: none; padding: 10px 20px; border-radius: 30px;
             font-weight: 800; cursor: pointer; font-size: 0.9rem;
@@ -48,39 +48,51 @@
         }
         .btn:hover { transform: scale(1.05); }
 
-        /* --- CSS POPOVER PERBAIKAN (OVERLAY MODE) --- */
-        /* Kotak ini akan muncul menutupi seluruh kartu */
-        .popover-box {
-            display: none; /* Default sembunyi */
-            position: absolute;
-            top: 0; left: 0; /* Mulai dari pojok kiri atas kartu */
-            width: 100%; height: 100%; /* Penuhi satu kartu */
-            background: rgba(224, 224, 224, 0.95); /* Warna sama kyk kartu tapi agak transparan dikit */
-            backdrop-filter: blur(5px); /* Efek blur background */
-            border-radius: 15px;
-            z-index: 20; /* Paling atas */
-            flex-direction: column;
+        /* --- MODAL POPUP (TENGAH LAYAR) --- */
+        .modal-overlay {
+            display: none; /* Default Sembunyi */
+            position: fixed; /* Mengambang di atas layar */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Latar belakang gelap transparan */
+            backdrop-filter: blur(4px); /* Efek blur kekinian */
+            z-index: 9999; /* Pasti paling atas */
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
         }
-
-        .popover-visible { display: flex !important; } /* Pakai !important biar maksa muncul */
-
-        .popover-input {
-            font-size: 3rem; font-weight: 900; width: 80%;
-            background: transparent; border: none; border-bottom: 3px solid black;
-            text-align: center; margin-bottom: 20px; outline: none;
-        }
-        .popover-input::-webkit-inner-spin-button, 
-        .popover-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
-        .btn-submit { width: 80%; padding: 12px; background: black; color: white; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-close { 
-            position: absolute; top: 10px; right: 15px; 
-            background: none; border: none; font-size: 1.5rem; cursor: pointer; font-weight: bold;
+        /* Saat kelas 'active' ditambahkan lewat JS, ubah display jadi flex */
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%; max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popUp 0.3s ease-out;
         }
+
+        @keyframes popUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 20px; }
+        
+        .modal-input {
+            width: 100%; font-size: 3rem; font-weight: 900; text-align: center;
+            border: none; border-bottom: 4px solid black; outline: none;
+            margin-bottom: 30px;
+        }
+        /* Hapus spinner input number */
+        .modal-input::-webkit-inner-spin-button, 
+        .modal-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+        
+        .btn-confirm { background: black; color: white; width: 100%; padding: 15px; border-radius: 50px; font-size: 1.1rem; border:none; font-weight:bold; cursor: pointer; }
+        .btn-cancel { background: #ddd; color: black; width: 100%; padding: 15px; border-radius: 50px; font-size: 1.1rem; border:none; font-weight:bold; cursor: pointer; }
 
     </style>
 </head>
@@ -108,16 +120,9 @@
                     <div class="bat-status status-<%= bat.status %>"><%= bat.status %></div>
                 </div>
                 <div class="percentage" id="percent-text-<%= bat.id %>"><%= bat.percentage %>%</div>
-                
                 <div class="card-footer">
-                    <button class="btn" onclick="event.stopPropagation(); toggleStatus(<%= bat.id %>, '<%= bat.status %>')">Charge</button>
-                    <button class="btn" onclick="event.stopPropagation(); togglePopover(<%= bat.id %>)">Update</button>
-                </div>
-
-                <div class="popover-box" id="popover-<%= bat.id %>" onclick="event.stopPropagation()">
-                    <button class="btn-close" onclick="togglePopover(<%= bat.id %>)">×</button>
-                    <input type="number" id="input-percent-<%= bat.id %>" class="popover-input" value="<%= bat.percentage %>" min="0" max="100">
-                    <button class="btn-submit" onclick="submitUpdate(<%= bat.id %>)">Submit</button>
+                    <button class="btn" onclick="toggleStatus(<%= bat.id %>, '<%= bat.status %>')">Charge</button>
+                    <button class="btn" onclick="openModal(<%= bat.id %>, <%= bat.percentage %>, '<%= bat.name %>')">Update</button>
                 </div>
             </div>
         <% }); %>
@@ -131,70 +136,100 @@
                     <div class="bat-status status-<%= bat.status %>"><%= bat.status %></div>
                 </div>
                 <div class="percentage" id="percent-text-<%= bat.id %>"><%= bat.percentage %>%</div>
-                
                 <div class="card-footer">
-                    <button class="btn" onclick="event.stopPropagation(); toggleStatus(<%= bat.id %>, '<%= bat.status %>')">Charge</button>
-                    <button class="btn" onclick="event.stopPropagation(); togglePopover(<%= bat.id %>)">Update</button>
-                </div>
-
-                <div class="popover-box" id="popover-<%= bat.id %>" onclick="event.stopPropagation()">
-                    <button class="btn-close" onclick="togglePopover(<%= bat.id %>)">×</button>
-                    <input type="number" id="input-percent-<%= bat.id %>" class="popover-input" value="<%= bat.percentage %>" min="0" max="100">
-                    <button class="btn-submit" onclick="submitUpdate(<%= bat.id %>)">Submit</button>
+                    <button class="btn" onclick="toggleStatus(<%= bat.id %>, '<%= bat.status %>')">Charge</button>
+                    <button class="btn" onclick="openModal(<%= bat.id %>, <%= bat.percentage %>, '<%= bat.name %>')">Update</button>
                 </div>
             </div>
         <% }); %>
     </div>
 
-    <script>
-        function togglePopover(id) {
-            // Tutup semua popover lain dulu
-            document.querySelectorAll('.popover-box').forEach(box => {
-                if (box.id !== `popover-${id}`) box.classList.remove('popover-visible');
-            });
-
-            const popover = document.getElementById(`popover-${id}`);
-            const inputField = document.getElementById(`input-percent-${id}`);
+    <div class="modal-overlay" id="updateModal" onclick="closeModalOnOutside(event)">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Update Battery</div>
             
-            // Toggle class visible
-            if (popover.classList.contains('popover-visible')) {
-                popover.classList.remove('popover-visible');
-            } else {
-                popover.classList.add('popover-visible');
-                // Delay sedikit agar transisi render selesai baru focus
-                setTimeout(() => {
-                    inputField.focus();
-                    inputField.select();
-                }, 100);
+            <input type="number" id="modalInput" class="modal-input" min="0" max="100">
+            
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-confirm" onclick="submitModal()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variabel untuk menyimpan kita lagi ngedit baterai yang mana
+        let currentEditId = null;
+
+        // 1. BUKA MODAL
+        function openModal(id, currentPercent, name) {
+            currentEditId = id; // Simpan ID baterai yang lagi diedit
+            
+            const modal = document.getElementById('updateModal');
+            const input = document.getElementById('modalInput');
+            const title = document.getElementById('modalTitle');
+
+            // Isi data ke modal
+            title.innerText = "Update " + name;
+            input.value = currentPercent;
+
+            // Tampilkan Modal
+            modal.classList.add('active');
+
+            // Fokus ke input biar langsung ngetik
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 100);
+        }
+
+        // 2. TUTUP MODAL
+        function closeModal() {
+            const modal = document.getElementById('updateModal');
+            modal.classList.remove('active');
+            currentEditId = null;
+        }
+
+        // Tutup kalau klik area gelap di luar kotak
+        function closeModalOnOutside(event) {
+            if (event.target.id === 'updateModal') {
+                closeModal();
             }
         }
 
-        async function submitUpdate(id) {
-            const inputField = document.getElementById(`input-percent-${id}`);
-            const newPercent = inputField.value;
+        // 3. SIMPAN DATA
+        async function submitModal() {
+            if (!currentEditId) return;
+
+            const input = document.getElementById('modalInput');
+            const newPercent = input.value;
 
             if (newPercent === "" || isNaN(newPercent) || newPercent < 0 || newPercent > 100) {
                 alert("Masukkan angka 0-100"); return;
             }
 
             try {
-                // Update UI Langsung
-                document.getElementById(`percent-text-${id}`).innerText = newPercent + "%";
-                // Tutup Popover
-                togglePopover(id);
+                // Update Tampilan Web Langsung (Biar cepet)
+                document.getElementById(`percent-text-${currentEditId}`).innerText = newPercent + "%";
+                
+                // Tutup Modal
+                closeModal();
 
                 // Kirim ke Server
                 const response = await fetch('/api/update-percent', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: id, percentage: newPercent })
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentEditId, percentage: newPercent })
                 });
 
                 if (!response.ok) throw new Error('Gagal');
+
             } catch (err) {
                 alert("Error koneksi"); location.reload();
             }
         }
 
+        // 4. LOGIKA CHARGE (Sama seperti sebelumnya)
         async function toggleStatus(id, currentStatus) {
             const response = await fetch('/api/toggle-status', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -203,11 +238,14 @@
             const data = await response.json();
             if (data.success) location.reload();
         }
-
-        // Klik di area kosong mana saja akan menutup popover
-        document.addEventListener('click', function() {
-            document.querySelectorAll('.popover-box').forEach(box => box.classList.remove('popover-visible'));
+        
+        // Tambahan: Bisa tekan Enter buat Save
+        document.getElementById("modalInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                submitModal();
+            }
         });
+
     </script>
 </body>
 </html>
